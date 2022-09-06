@@ -1,10 +1,13 @@
 //install express
 const express = require('express');
 
+//set port to environmental variable
+const PORT = process.env.PORT || 3001;
+
 // instantiate: make the server listen to the app
 const app = express(); 
-app.listen(3001, () => {
-    console.log('API server now on port 3001!');
+app.listen(PORT, () => {
+    console.log('API server now on port ${PORT}!');
 });
 
 // create route front end can use to request data from
