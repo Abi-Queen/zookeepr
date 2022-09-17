@@ -4,32 +4,33 @@ const path = require('path');
 //install express
 const express = require('express');
 
+//create route the front end can use to get data from
+const { animals } = require('./data/animals');
+
 //set port to environmental variable
 const PORT = process.env.PORT || 3001;
 const app = express();
+
 //parse incoming string or array data
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 //parse incoming JSON data
 app.use(express.json());
 
-//create route the font end can use to get data from
-const { animals } = require('./data/animals');
-
 function filterByQuery(query, animalsArray) {
   let personalityTraitsArray = [];
-      // animalsArray saved as filteredResults 
+  //animalsArray saved as filteredResults
   let filteredResults = animalsArray;
   if (query.personalityTraits) {
     //save personalityTraits as a dedicated array
-    //if personalityTraits is a string, place it into a new array and save
+    //if personalityTraits is a string, place it inot a new array and save
     if (typeof query.personalityTraits === 'string') {
       personalityTraitsArray = [query.personalityTraits];
     } else {
       personalityTraitsArray = query.personalityTraits;
     }
-//loop through each trait in the personalityTraits array
+    //loop through each trait in the personalityTraits array
     personalityTraitsArray.forEach(trait => {
-    //check the trait against each animal in the filteredResults array (which starts as a copy of the animalsArray) but then becomes an array matching the query
+      //check the trait against each animal in the filteredResults array (which starts as a copy of the animalsArray) but then becomes an array matching the query
       filteredResults = filteredResults.filter(
         animal => animal.personalityTraits.indexOf(trait) !== -1
       );
@@ -53,14 +54,32 @@ function findById(id, animalsArray) {
   return result;
 }
 
+//write user input to file (instead of just creating a copy)
 function createNewAnimal(body, animalsArray) {
   const animal = body;
   animalsArray.push(animal);
   fs.writeFileSync(
-    path.join(_dirname, './data/animals.json'),
-    JSON.stringify({animals: animalsArray}, null, 2)
-  ); 
-  return animal; 
+    path.join(__dirname, './data/animals.json'),
+    JSON.stringify({ animals: animalsArray }, null, 2)
+  );
+  return animal;
+}
+
+//validate user input when adding animal
+function validateAnimal(animal) {
+  if (!animal.name || typeof animal.name !== 'string') {
+    return false;
+  }
+  if (!animal.species || typeof animal.species !== 'string') {
+    return false;
+  }
+  if (!animal.diet || typeof animal.diet !== 'string') {
+    return false;
+  }
+  if (!animal.personalityTraits || !Array.isArray(animal.personalityTraits)) {
+    return false;
+  }
+  return true;
 }
 
 app.get('/api/animals', (req, res) => {
@@ -81,38 +100,21 @@ app.get('/api/animals/:id', (req, res) => {
 });
 
 app.post('/api/animals', (req, res) => {
-// req.body is where our incoming content will be
-//set id based on what the next index of the array will be
-req.body.id = animals.length.toString();
+  //req.body is where our incoming content will be
+  // set id based on what the next index of the array will be
+  req.body.id = animals.length.toString();
 
-// if any data in req.body is incorrect, send 400 error back
-if (!validateAnimal(req.body)) {
-  res.status(400).send('The animal is not properly formatted.');
-} else {
-  //add animal to json file and animals array in this function
-  const animal = createNewAnimal(req.body, animals);
-  res.json(req.body);
-}
+  //if any data in req.body is incorrect, send 400 error back
+  if (!validateAnimal(req.body)) {
+    res.status(400).send('The animal is not properly formatted.');
+  } else {
+    //add animal to json file and animals array in this function
+    const animal = createNewAnimal(req.body, animals);
+    res.json(animal);
+  }
 });
 
-// instantiate: make the server listen on a port
+//instantiate: make the server listen on a port
 app.listen(PORT, () => {
   console.log(`API server now on port ${PORT}!`);
 });
-
-function validateAnimal(animal) {
-  if (!animal.name || typeof animal.name !== 'string') {
-    return false;
-  }
-  if (!animal.species || typeof animal.species !== 'string') {
-    return false;
-  }
-  if (!animal.diet || typeof animal.diet !== 'string') {
-    return false; 
-  }
-  if (!animal.personalityTraits || !Array.isArray(animal.personalityTraits)) {
-    return false;
-  }
-  return true;
-};
-
