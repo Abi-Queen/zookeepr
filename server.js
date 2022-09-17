@@ -16,6 +16,24 @@ app.use(express.urlencoded({ extended: true }));
 //parse incoming JSON data
 app.use(express.json());
 
+// middleware to tell server to make certain files vailable rather than route them in a specific endpoint
+app.use(express.static('public'));
+
+//add routes to front end html files
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/index.html'));
+});
+app.get('/animals', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/animals.html'));
+});
+app.get('/zookeepers', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/zookeepers.html'));
+});
+//wildcard route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/index.html'));
+});
+
 function filterByQuery(query, animalsArray) {
   let personalityTraitsArray = [];
   //animalsArray saved as filteredResults
